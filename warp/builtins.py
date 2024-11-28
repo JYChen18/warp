@@ -3597,6 +3597,15 @@ add_builtin(
 )
 
 add_builtin(
+    "mesh_get_vertex_normal",
+    input_types={"id": uint64, "index": int},
+    value_type=vec3,
+    group="Geometry",
+    doc="""Returns the vertex normal of the mesh given a index.""",
+    export=False,
+)
+
+add_builtin(
     "mesh_get_index",
     input_types={"id": uint64, "index": int},
     value_type=int,

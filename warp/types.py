@@ -3171,6 +3171,7 @@ class Mesh:
     vars = {
         "points": Var("points", array(dtype=vec3)),
         "velocities": Var("velocities", array(dtype=vec3)),
+        "point_normals": Var("point_normals", array(dtype=vec3)),
         "indices": Var("indices", array(dtype=int32)),
     }
 
@@ -3179,7 +3180,7 @@ class Mesh:
         instance.id = None
         return instance
 
-    def __init__(self, points=None, indices=None, velocities=None, support_winding_number=False):
+    def __init__(self, points=None, indices=None, velocities=None, point_normals=None, support_winding_number=False):
         """Class representing a triangle mesh.
 
         Attributes:
@@ -3189,6 +3190,7 @@ class Mesh:
         Args:
             points (:class:`warp.array`): Array of vertex positions of type :class:`warp.vec3`
             indices (:class:`warp.array`): Array of triangle indices of type :class:`warp.int32`, should be a 1d array with shape (num_tris * 3)
+            point_normals (:class:`warp.array`): Array of vertex normals of type :class:`warp.vec3`
             velocities (:class:`warp.array`): Array of vertex velocities of type :class:`warp.vec3` (optional)
             support_winding_number (bool): If true the mesh will build additional datastructures to support `wp.mesh_query_point_sign_winding_number()` queries
         """
@@ -3202,6 +3204,9 @@ class Mesh:
         if velocities and (velocities.dtype != vec3 or not velocities.is_contiguous):
             raise RuntimeError("Mesh velocities should be a contiguous array of type wp.vec3")
 
+        if point_normals and (point_normals.dtype != vec3 or not point_normals.is_contiguous):
+            raise RuntimeError("Mesh point_normals should be a contiguous array of type wp.vec3")
+
         if indices.dtype != int32 or not indices.is_contiguous:
             raise RuntimeError("Mesh indices should be a contiguous array of type wp.int32")
 
@@ -3211,6 +3216,7 @@ class Mesh:
         self.device = points.device
         self._points = points
         self._velocities = velocities
+        self._point_normals = point_normals
         self.indices = indices
 
         self.runtime = warp.context.runtime
@@ -3219,6 +3225,7 @@ class Mesh:
             self.id = self.runtime.core.mesh_create_host(
                 points.__ctype__(),
                 velocities.__ctype__() if velocities else array().__ctype__(),
+                point_normals.__ctype__() if point_normals else array().__ctype__(),
                 indices.__ctype__(),
                 int(len(points)),
                 int(indices.size / 3),
@@ -3229,6 +3236,7 @@ class Mesh:
                 self.device.context,
                 points.__ctype__(),
                 velocities.__ctype__() if velocities else array().__ctype__(),
+                point_normals.__ctype__() if point_normals else array().__ctype__(),
                 indices.__ctype__(),
                 int(len(points)),
                 int(indices.size / 3),

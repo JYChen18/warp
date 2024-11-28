@@ -3094,6 +3094,7 @@ class Runtime:
                 warp.types.array_t,
                 warp.types.array_t,
                 warp.types.array_t,
+                warp.types.array_t,
                 ctypes.c_int,
                 ctypes.c_int,
                 ctypes.c_int,
@@ -3102,6 +3103,7 @@ class Runtime:
             self.core.mesh_create_device.restype = ctypes.c_uint64
             self.core.mesh_create_device.argtypes = [
                 ctypes.c_void_p,
+                warp.types.array_t,
                 warp.types.array_t,
                 warp.types.array_t,
                 warp.types.array_t,

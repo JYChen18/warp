@@ -109,9 +109,9 @@ void bvh_refit_with_solid_angle_host(BVH& bvh, Mesh& mesh)
     bvh_refit_with_solid_angle_recursive_host(bvh, 0, mesh);
 }
 
-uint64_t mesh_create_host(array_t<wp::vec3> points, array_t<wp::vec3> velocities, array_t<int> indices, int num_points, int num_tris, int support_winding_number)
+uint64_t mesh_create_host(array_t<wp::vec3> points, array_t<wp::vec3> velocities, array_t<wp::vec3> point_normals, array_t<int> indices, int num_points, int num_tris, int support_winding_number)
 {
-    Mesh* m = new Mesh(points, velocities, indices, num_points, num_tris);
+    Mesh* m = new Mesh(points, velocities, point_normals, indices, num_points, num_tris);
 
     m->lowers = new vec3[num_tris];
     m->uppers = new vec3[num_tris];
@@ -226,15 +226,28 @@ void mesh_set_velocities_host(uint64_t id, wp::array_t<wp::vec3> velocities)
     m->velocities = velocities;
 }
 
+
+void mesh_set_point_normals_host(uint64_t id, wp::array_t<wp::vec3> point_normals)
+{
+    Mesh* m = (Mesh*)(id);
+    if (point_normals.ndim != 1 || point_normals.shape[0] != m->point_normals.shape[0])
+    {
+        fprintf(stderr, "The new point_normals input for mesh_set_point_normals_host does not match the shape of the original point_normals!\n");
+        return;
+    }
+    m->point_normals = point_normals;
+}
+
 // stubs for non-CUDA platforms
 #if !WP_ENABLE_CUDA
 
 
-WP_API uint64_t mesh_create_device(void* context, wp::array_t<wp::vec3> points, wp::array_t<wp::vec3> velocities, wp::array_t<int> tris, int num_points, int num_tris, int support_winding_number) { return 0; }
+WP_API uint64_t mesh_create_device(void* context, wp::array_t<wp::vec3> points, wp::array_t<wp::vec3> velocities, wp::array_t<wp::vec3> point_normals, wp::array_t<int> tris, int num_points, int num_tris, int support_winding_number) { return 0; }
 WP_API void mesh_destroy_device(uint64_t id) {}
 WP_API void mesh_refit_device(uint64_t id) {}
 WP_API void mesh_set_points_device(uint64_t id, wp::array_t<wp::vec3> points) {};
 WP_API void mesh_set_velocities_device(uint64_t id, wp::array_t<wp::vec3> points) {};
+WP_API void mesh_set_point_normals_device(uint64_t id, wp::array_t<wp::vec3> points) {};
 
 
 #endif // !WP_ENABLE_CUDA

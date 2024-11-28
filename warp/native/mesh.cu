@@ -165,11 +165,11 @@ void bvh_refit_with_solid_angle_device(BVH& bvh, Mesh& mesh)
 } // namespace wp
 
 
-uint64_t mesh_create_device(void* context, wp::array_t<wp::vec3> points, wp::array_t<wp::vec3> velocities, wp::array_t<int> indices, int num_points, int num_tris, int support_winding_number)
+uint64_t mesh_create_device(void* context, wp::array_t<wp::vec3> points, wp::array_t<wp::vec3> velocities, wp::array_t<wp::vec3> point_normals, wp::array_t<int> indices, int num_points, int num_tris, int support_winding_number)
 {
     ContextGuard guard(context);
 
-    wp::Mesh mesh(points, velocities, indices, num_points, num_tris);
+    wp::Mesh mesh(points, velocities, point_normals, indices, num_points, num_tris);
 
     mesh.context = context ? context : cuda_context_get_current();
 
@@ -338,6 +338,31 @@ void mesh_set_velocities_device(uint64_t id, wp::array_t<wp::vec3> velocities)
     else 
     {
         fprintf(stderr, "The mesh id provided to mesh_set_velocities_device is not valid!\n");
+        return;
+    }
+}
+
+
+void mesh_set_point_normals_device(uint64_t id, wp::array_t<wp::vec3> point_normals)
+{
+    wp::Mesh m;
+    if (mesh_get_descriptor(id, m))
+    {
+        if (point_normals.ndim != 1 || point_normals.shape[0] != m.point_normals.shape[0])
+        {
+            fprintf(stderr, "The new point_normals input for mesh_set_point_normals_device does not match the shape of the original point_normals\n");
+            return;
+        }
+
+        m.point_normals = point_normals;
+
+        wp::Mesh* mesh_device = (wp::Mesh*)id;
+        memcpy_h2d(WP_CURRENT_CONTEXT, mesh_device, &m, sizeof(wp::Mesh));
+        mesh_set_descriptor(id, m);
+    }
+    else 
+    {
+        fprintf(stderr, "The mesh id provided to mesh_set_point_normals_device is not valid!\n");
         return;
     }
 }

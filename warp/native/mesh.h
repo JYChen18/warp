@@ -23,6 +23,7 @@ struct Mesh
 {
     array_t<vec3> points;
     array_t<vec3> velocities;
+    array_t<vec3> point_normals;
 
     array_t<int> indices;
 
@@ -54,11 +55,12 @@ struct Mesh
     inline CUDA_CALLABLE Mesh(
         array_t<vec3> points,
         array_t<vec3> velocities,
+        array_t<vec3> point_normals,
         array_t<int> indices,
         int num_points,
         int num_tris,
         void* context = nullptr
-    ) : points(points), velocities(velocities), indices(indices), num_points(num_points), num_tris(num_tris), context(context)
+    ) : points(points), velocities(velocities), point_normals(point_normals), indices(indices), num_points(num_points), num_tris(num_tris), context(context)
     {
         lowers = nullptr;
         uppers = nullptr;
@@ -1862,6 +1864,31 @@ CUDA_CALLABLE inline vec3 mesh_get_velocity(uint64_t id, int index)
 
 CUDA_CALLABLE inline void adj_mesh_get_velocity(uint64_t id, int index,
                                                 uint64_t& adj_id, int& adj_index, const vec3& adj_ret)
+{
+    // no-op
+}
+
+CUDA_CALLABLE inline vec3 mesh_get_vertex_normal(uint64_t id, int index)
+{
+    Mesh mesh = mesh_get(id);
+
+    if (!mesh.point_normals)
+        return vec3();
+
+#if FP_CHECK
+    if (index >= mesh.num_tris * 3)
+    {
+        printf("mesh_get_point (%llu, %d) out of bounds at %s:%d\n", id, index, __FILE__, __LINE__);
+        assert(0);
+    }
+#endif
+
+    int i = mesh.indices[index];
+    return mesh.point_normals[i];
+}
+
+CUDA_CALLABLE inline void adj_mesh_get_vertex_normal(uint64_t id, int index,
+                                             uint64_t& adj_id, int& adj_index, const vec3& adj_ret)
 {
     // no-op
 }
